@@ -11,3 +11,7 @@ typealias DoomMap = Array<Array<Int?>>
 fun DoomMap.containsPosition(position: PVector): Boolean {
     return position.x in 0f..<size.toFloat() && position.y in 0f..<this[0].size.toFloat()
 }
+
+operator fun DoomMap.get(position: PVector): Int? {
+    return this[position.y.toInt()][position.x.toInt()]
+}
