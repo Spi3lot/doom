@@ -2,9 +2,10 @@ package org.spi3lot
 
 import org.spi3lot.data.MapReader
 import org.spi3lot.data.Settings
+import org.spi3lot.input.KeyHandler
 import org.spi3lot.player.Player
 import org.spi3lot.rendering.Draw.drawMap
-import org.spi3lot.rendering.Draw.drawRender
+import org.spi3lot.rendering.Draw.render
 import processing.core.PApplet
 import processing.core.PVector
 import processing.event.KeyEvent
@@ -24,6 +25,11 @@ class Doom : PApplet() {
 
     val settings = Settings(800, 600, HALF_PI)
 
+    private val deltaTime: Float
+        get() = 1 / frameRate
+
+    private val keyHandler = KeyHandler()
+
     private val backgroundColor = color(0, 255, 255)
 
     private var map = MapReader.readMap("")
@@ -36,27 +42,34 @@ class Doom : PApplet() {
 
     override fun setup() {
         noCursor()
+        keyHandler.addKeyAction('W') { player.moveForward(map, deltaTime) }
+        keyHandler.addKeyAction('A') { player.moveLeft(map, deltaTime) }
+        keyHandler.addKeyAction('S') { player.moveBackward(map, deltaTime) }
+        keyHandler.addKeyAction('D') { player.moveRight(map, deltaTime) }
     }
 
     override fun draw() {
+        keyHandler.invokeActions()
         background(backgroundColor)
 
         if (showMap) {
-            drawMap(map)
+            drawMap(map, drawRays = true)
         } else {
-            drawRender(player, map)
+            render(player, map)
         }
     }
 
     override fun keyPressed(event: KeyEvent) {
-        when (event.key.uppercaseChar()) {
-            'R' -> map = MapReader.readMap("")
-            'M' -> showMap = !showMap
-            'W' -> player.moveForward(map, 0.1f)
-            'S' -> player.moveBackward(map, 0.1f)
-            'A' -> player.moveLeft(map, 0.1f)
-            'D' -> player.moveRight(map, 0.1f)
+        keyHandler.keyPressed(event.keyCode)
+
+        when (event.keyCode) {
+            'R'.code -> map = MapReader.readMap("")
+            'M'.code -> showMap = !showMap
         }
+    }
+
+    override fun keyReleased(event: KeyEvent) {
+        keyHandler.keyReleased(event.keyCode)
     }
 
     override fun mouseDragged(event: MouseEvent) {
