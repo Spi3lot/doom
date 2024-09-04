@@ -1,5 +1,8 @@
 package org.spi3lot.data
 
+import org.spi3lot.math.PVectorOperators.div
+import org.spi3lot.math.PVectorOperators.times
+import processing.core.PApplet.floor
 import processing.core.PVector
 
 /**
@@ -8,18 +11,25 @@ import processing.core.PVector
  */
 typealias DoomMap = Array<Array<Int?>>
 
+val DoomMap.sizeVector: PVector
+    get() = PVector(this[0].size.toFloat(), size.toFloat())
+
 fun DoomMap.containsPosition(position: PVector): Boolean {
     return position.x in 0f..<size.toFloat() && position.y in 0f..<this[0].size.toFloat()
 }
 
 fun DoomMap.screenToWorld(screenPosition: PVector, settings: Settings): PVector {
-    return PVector(this[0].size * screenPosition.x / settings.width, size * screenPosition.y / settings.height)
+    return screenPosition / calcRectDimensions(settings)
 }
 
 fun DoomMap.worldToScreen(worldPosition: PVector, settings: Settings): PVector {
-    return PVector(settings.width * worldPosition.x / this[0].size, settings.height * worldPosition.y / size)
+    return worldPosition * calcRectDimensions(settings)
+}
+
+fun DoomMap.calcRectDimensions(settings: Settings): PVector {
+    return settings.dimensions / sizeVector
 }
 
 fun DoomMap.getTileColor(position: PVector): Int? {
-    return getOrNull(position.y.toInt())?.getOrNull(position.x.toInt())
+    return getOrNull(floor(position.y))?.getOrNull(floor(position.x))
 }

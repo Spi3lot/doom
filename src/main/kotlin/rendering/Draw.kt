@@ -2,9 +2,10 @@ package org.spi3lot.rendering
 
 import org.spi3lot.Doom
 import org.spi3lot.data.DoomMap
+import org.spi3lot.data.calcRectDimensions
 import org.spi3lot.data.getTileColor
 import org.spi3lot.data.worldToScreen
-import org.spi3lot.player.Player
+import org.spi3lot.math.PVectorOperators.times
 import processing.core.PVector
 import kotlin.collections.indices
 import kotlin.math.cos
@@ -15,12 +16,8 @@ import kotlin.math.cos
  */
 object Draw {
 
-    fun Doom.drawMap(
-        map: DoomMap,
-        drawRays: Boolean = false,
-    ) {
-        val rectWidth = width / map[0].size
-        val rectHeight = height / map.size
+    fun Doom.drawMap(map: DoomMap, drawRays: Boolean = false) {
+        val rectDimensions = map.calcRectDimensions(settings)
 
         for (j in map.indices) {
             val row = map[j]
@@ -28,7 +25,7 @@ object Draw {
             for (i in row.indices) {
                 fill(row[i] ?: continue)
                 stroke(0)
-                rect(i * rectWidth.toFloat(), j * rectHeight.toFloat(), rectWidth.toFloat(), rectHeight.toFloat())
+                rect(i * rectDimensions.x, j * rectDimensions.y, rectDimensions.x, rectDimensions.y)
             }
         }
 
@@ -38,7 +35,7 @@ object Draw {
         fill(255f, 0f, 0f)
         circle(screenPosition.x, screenPosition.y, 10f)
 
-        val offset = PVector.fromAngle(settings.fov / 2).mult(10f)
+        val offset = PVector.fromAngle(settings.fov / 2) * 50f
         pushMatrix()
         translate(screenPosition.x, screenPosition.y)
         rotate(player.direction)
@@ -49,32 +46,24 @@ object Draw {
         popMatrix()
 
         if (drawRays) {
-            render(map, player, true)
+            render(map, true)
         }
     }
 
-    fun Doom.render(
-        map: DoomMap,
-        player: Player,
-        drawRays: Boolean = false,
-    ) {
+    fun Doom.render(map: DoomMap, drawRays: Boolean = false) {
         val ray = Ray()
+        val leftMostRay = player.getLeftMostRayDirection(settings.fov)
+        val rightMostRay = player.getRightMostRayDirection(settings.fov)
 
         for (x in 0..<width) {
             ray.position.set(player.position)
-            ray.direction.set(PVector.fromAngle(player.direction + calcAngleForColumn(x)))
-            castRay(ray, map, player, drawRays, x)
+            ray.direction.set(PVector.lerp(leftMostRay, rightMostRay, x / width.toFloat()))
+            castRay(ray, map, drawRays, x)
             ray.reset()
         }
     }
 
-    private fun Doom.castRay(
-        ray: Ray,
-        map: DoomMap,
-        player: Player,
-        drawRays: Boolean,
-        x: Int,
-    ) {
+    private fun Doom.castRay(ray: Ray, map: DoomMap, drawRays: Boolean, x: Int) {
         while (ray.canStep()) {
             val color = map.getTileColor(ray.position)
 
@@ -82,8 +71,7 @@ object Draw {
                 if (drawRays) {
                     drawRayIntersection(ray, map)
                 } else {
-                    val distance = PVector.dist(player.position, ray.position)
-                    drawWallLine(distance, color, x)
+                    drawWallLine(ray, color, x)
                 }
 
                 return
@@ -110,15 +98,13 @@ object Draw {
         point(intersectionScreenPosition.x, intersectionScreenPosition.y)
     }
 
-    private fun Doom.drawWallLine(distance: Float, color: Int, x: Int) {
-        val wallHeight = height / (distance * cos(calcAngleForColumn(x)))
+    private fun Doom.drawWallLine(ray: Ray, color: Int, x: Int) {
+        val distance = settings.distance(ray.position, player.position)
+        val adjustedDistance = distance * cos(ray.direction.heading() - player.direction)
+        val wallHeight = height / adjustedDistance
         stroke(color)
         strokeWeight(1f)
         line(x.toFloat(), (height - wallHeight) / 2, x.toFloat(), (height + wallHeight) / 2)
-    }
-
-    private fun Doom.calcAngleForColumn(x: Int): Float {
-        return settings.fov * (x / width.toFloat() - 0.5f)
     }
 
 }

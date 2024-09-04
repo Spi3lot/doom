@@ -3,7 +3,7 @@ package org.spi3lot
 import org.spi3lot.data.MapReader
 import org.spi3lot.data.Settings
 import org.spi3lot.input.KeyHandler
-import org.spi3lot.player.Player
+import org.spi3lot.input.Player
 import org.spi3lot.rendering.Draw.drawMap
 import org.spi3lot.rendering.Draw.render
 import processing.core.PApplet
@@ -23,7 +23,13 @@ class Doom : PApplet() {
 
     val player = Player(PVector(5f, 5f))
 
-    val settings = Settings(800, 800, PI * 0.6f)
+    val settings = Settings(
+        width = 600,
+        height = 600,
+        worldScale = 3f,
+        speedMultiplier = 5f,
+        fov = PI * 0.6f
+    )
 
     private val deltaTime: Float
         get() = 1 / frameRate
@@ -41,10 +47,10 @@ class Doom : PApplet() {
     }
 
     override fun setup() {
-        keyHandler.addKeyAction('W') { player.moveForward(map, deltaTime * 2) }
-        keyHandler.addKeyAction('A') { player.moveLeft(map, deltaTime * 2) }
-        keyHandler.addKeyAction('S') { player.moveBackward(map, deltaTime * 2) }
-        keyHandler.addKeyAction('D') { player.moveRight(map, deltaTime * 2) }
+        keyHandler.addKeyAction('W') { player.moveForward(map, settings.playerSpeed * deltaTime) }
+        keyHandler.addKeyAction('A') { player.moveLeft(map, settings.playerSpeed * deltaTime) }
+        keyHandler.addKeyAction('S') { player.moveBackward(map, settings.playerSpeed * deltaTime) }
+        keyHandler.addKeyAction('D') { player.moveRight(map, settings.playerSpeed * deltaTime) }
         noCursor()
     }
 
@@ -55,7 +61,7 @@ class Doom : PApplet() {
         if (showMap) {
             drawMap(map, drawRays = true)
         } else {
-            render(map, player)
+            render(map)
         }
     }
 
@@ -73,7 +79,7 @@ class Doom : PApplet() {
     }
 
     override fun mouseDragged(event: MouseEvent) {
-        player.direction += (mouseX - pmouseX) * 0.01f
+        player.direction += (mouseX - pmouseX) * 0.005f
     }
 
 }

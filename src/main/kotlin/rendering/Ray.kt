@@ -1,5 +1,6 @@
 package org.spi3lot.rendering
 
+import org.spi3lot.math.PVectorOperators.times
 import processing.core.PApplet.ceil
 import processing.core.PApplet.floor
 import processing.core.PApplet.min
@@ -26,7 +27,7 @@ class Ray(
         val targetX = if (direction.x > 0) floor(position.x + 1) else ceil(position.x - 1)
         val targetY = if (direction.y > 0) floor(position.y + 1) else ceil(position.y - 1)
         val t = min((targetX - position.x) / direction.x, (targetY - position.y) / direction.y)
-        position.add(direction.mult(t + epsilon))
+        position.add(direction * (t + epsilon))
         stepCount++
     }
 
