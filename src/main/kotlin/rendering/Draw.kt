@@ -2,13 +2,11 @@ package org.spi3lot.rendering
 
 import org.spi3lot.Doom
 import org.spi3lot.data.DoomMap
-import org.spi3lot.data.containsPosition
 import org.spi3lot.data.getTileColor
 import org.spi3lot.data.worldToScreen
 import org.spi3lot.player.Player
 import processing.core.PVector
 import kotlin.collections.indices
-import kotlin.math.abs
 import kotlin.math.cos
 
 /**
@@ -51,13 +49,13 @@ object Draw {
         popMatrix()
 
         if (drawRays) {
-            render(player, map, true)
+            render(map, player, true)
         }
     }
 
     fun Doom.render(
-        player: Player,
         map: DoomMap,
+        player: Player,
         drawRays: Boolean = false,
     ) {
         val ray = Ray()
@@ -65,29 +63,22 @@ object Draw {
         for (x in 0..<width) {
             ray.position.set(player.position)
             ray.direction.set(PVector.fromAngle(player.direction + calcAngleForColumn(x)))
-            castRay(ray, player, map, drawRays, x)
+            castRay(ray, map, player, drawRays, x)
+            ray.reset()
         }
     }
 
     private fun Doom.castRay(
         ray: Ray,
-        player: Player,
         map: DoomMap,
+        player: Player,
         drawRays: Boolean,
         x: Int,
     ) {
-        var collidedDiagonally = false
-
-        while (map.containsPosition(ray.position)) {
+        while (ray.canStep()) {
             val color = map.getTileColor(ray.position)
 
-            if (drawRays) {
-                drawRayPosition(ray, map)
-            }
-
             if (color != null) {
-                ray.findIntersection(map)
-
                 if (drawRays) {
                     drawRayIntersection(ray, map)
                 } else {
@@ -98,11 +89,11 @@ object Draw {
                 return
             }
 
-            val (dx, dy) = ray.step()
-
-            if (dx != 0 && dy != 0) {
-                check (abs(dx) <= 1 || abs(dy) <= 1) { "dx and dy must be 0 or 1" }
+            if (drawRays) {
+                drawRayPosition(ray, map)
             }
+
+            ray.step()
         }
     }
 
@@ -120,7 +111,7 @@ object Draw {
     }
 
     private fun Doom.drawWallLine(distance: Float, color: Int, x: Int) {
-        val wallHeight = height / (1 + distance * cos(calcAngleForColumn(x)))
+        val wallHeight = height / (distance * cos(calcAngleForColumn(x)))
         stroke(color)
         strokeWeight(1f)
         line(x.toFloat(), (height - wallHeight) / 2, x.toFloat(), (height + wallHeight) / 2)

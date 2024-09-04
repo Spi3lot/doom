@@ -6,8 +6,14 @@ package org.spi3lot.data
  */
 object MapReader {
 
+    private val random = java.util.Random()
+
     fun readMap(path: String): DoomMap {
-        return Array(10) { Array(10) { if (Math.random() < 0.5) 0xFF00FF00.toInt() else null } }
+        return Array(10) { Array(10) { if (random.nextBoolean()) randomWallColor()else null } }
+    }
+
+    private fun randomWallColor(): Int {
+        return random.nextInt() and 0xFFFF00 or 0xFF000000.toInt()
     }
 
 }

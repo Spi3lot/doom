@@ -21,5 +21,5 @@ fun DoomMap.worldToScreen(worldPosition: PVector, settings: Settings): PVector {
 }
 
 fun DoomMap.getTileColor(position: PVector): Int? {
-    return this[position.y.toInt()][position.x.toInt()]
+    return getOrNull(position.y.toInt())?.getOrNull(position.x.toInt())
 }

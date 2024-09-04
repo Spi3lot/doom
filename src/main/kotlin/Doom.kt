@@ -23,7 +23,7 @@ class Doom : PApplet() {
 
     val player = Player(PVector(5f, 5f))
 
-    val settings = Settings(800, 600, HALF_PI)
+    val settings = Settings(800, 800, PI * 0.6f)
 
     private val deltaTime: Float
         get() = 1 / frameRate
@@ -41,11 +41,11 @@ class Doom : PApplet() {
     }
 
     override fun setup() {
+        keyHandler.addKeyAction('W') { player.moveForward(map, deltaTime * 2) }
+        keyHandler.addKeyAction('A') { player.moveLeft(map, deltaTime * 2) }
+        keyHandler.addKeyAction('S') { player.moveBackward(map, deltaTime * 2) }
+        keyHandler.addKeyAction('D') { player.moveRight(map, deltaTime * 2) }
         noCursor()
-        keyHandler.addKeyAction('W') { player.moveForward(map, deltaTime) }
-        keyHandler.addKeyAction('A') { player.moveLeft(map, deltaTime) }
-        keyHandler.addKeyAction('S') { player.moveBackward(map, deltaTime) }
-        keyHandler.addKeyAction('D') { player.moveRight(map, deltaTime) }
     }
 
     override fun draw() {
@@ -55,7 +55,7 @@ class Doom : PApplet() {
         if (showMap) {
             drawMap(map, drawRays = true)
         } else {
-            render(player, map)
+            render(map, player)
         }
     }
 

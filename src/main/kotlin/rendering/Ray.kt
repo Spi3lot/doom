@@ -1,8 +1,8 @@
 package org.spi3lot.rendering
 
-import org.spi3lot.data.DoomMap
-import org.spi3lot.data.getTileColor
-import processing.core.PApplet
+import processing.core.PApplet.ceil
+import processing.core.PApplet.floor
+import processing.core.PApplet.min
 import processing.core.PVector
 
 /**
@@ -12,26 +12,26 @@ import processing.core.PVector
 class Ray(
     val position: PVector = PVector(),
     val direction: PVector = PVector(),
+    private val maxSteps: Int = 25,
+    private val epsilon: Float = 0.001f,
 ) {
 
-    fun findIntersection(map: DoomMap, iterations: Int = 10) {
-        var direction = -1
+    private var stepCount = 0
 
-        for (i in 1..iterations) {
-            step(direction * PApplet.pow(2f, -i.toFloat()))
-            val color = map.getTileColor(position)
-            direction = if (color != null) -1 else 1
-        }
+    fun canStep(): Boolean {
+        return stepCount < maxSteps
     }
 
-    fun step(): Pair<Int, Int> {
-        val oldPosition = position.copy()
-        position.add(direction)
-        return (position.x.toInt() - oldPosition.x.toInt()) to (position.y.toInt() - oldPosition.y.toInt())
+    fun step() {
+        val targetX = if (direction.x > 0) floor(position.x + 1) else ceil(position.x - 1)
+        val targetY = if (direction.y > 0) floor(position.y + 1) else ceil(position.y - 1)
+        val t = min((targetX - position.x) / direction.x, (targetY - position.y) / direction.y)
+        position.add(direction.mult(t + epsilon))
+        stepCount++
     }
 
-    fun step(multiplier: Float) {
-        position.add(PVector.mult(direction, multiplier))
+    fun reset() {
+        stepCount = 0
     }
 
 }
