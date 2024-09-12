@@ -12,7 +12,9 @@ object Time {
     private var lastNanos = System.nanoTime()
 
     fun updateDeltaTime() {
-        deltaTime = (System.nanoTime() - lastNanos) / 1e9f
+        val nanos = System.nanoTime()
+        deltaTime = (nanos - lastNanos) / 1e9f
+        lastNanos = nanos
     }
 
 }

@@ -1,5 +1,6 @@
 #include <jni.h>
 #include <cuda_runtime.h>
+#include <stdio.h>
 
 __device__ float distance(float2 a, float2 b)
 {
@@ -8,11 +9,17 @@ __device__ float distance(float2 a, float2 b)
 
 __device__ float2 lerp(float2 a, float2 b, float t)
 {
-    return make_float2(fmaf(t, b.x - a.x, a.x), fmaf(t, b.y - a.y, a.y));
+    // return make_float2(fmaf(t, b.x - a.x, a.x), fmaf(t, b.y - a.y, a.y));
+    return make_float2(a.x + t * (b.x - a.x), a.y + t * (b.y - a.y));
 }
 
 __global__ void castRaysKernel(
-    int width,
+    int *map,
+    int mapWidth,
+    int mapHeight,
+    float worldScale,
+    int windowWidth,
+    int windowHeight,
     int maxSteps,
     float epsilon,
     float2 playerPos,
@@ -20,18 +27,16 @@ __global__ void castRaysKernel(
     float2 leftMostRayDirection,
     float2 rightMostRayDirection,
     float *wallHeights,
-    int *colors,
-    int *map,
-    int mapWidth,
-    int mapHeight)
+    int *colors)
 {
     int x = blockIdx.x * blockDim.x + threadIdx.x;
-    if (x >= width)
+    if (x >= windowWidth)
         return;
 
-    float t = x / (float)width;
-    float2 rayDir = lerp(leftMostRayDirection, rightMostRayDirection, t);
+    float t = x / (float)windowWidth;
     float2 rayPos = playerPos;
+    float2 rayDir = lerp(leftMostRayDirection, rightMostRayDirection, t);
+    float rayHeading = atan2f(rayDir.y, rayDir.x);
 
     for (int step = 0; step < maxSteps; ++step)
     {
@@ -41,11 +46,12 @@ __global__ void castRaysKernel(
         if (mapX >= 0 && mapX < mapWidth && mapY >= 0 && mapY < mapHeight)
         {
             int color = map[mapY * mapWidth + mapX];
-            if (color != 0)  // TODO: NULL instead of 0
+
+            if (color != 0) // TODO: NULL instead of 0
             {
-                float dist = distance(rayPos, playerPos);
-                float adjustedDist = dist * cosf(rayDir.x - playerHeading);
-                wallHeights[x] = 1.0f / fmaxf(1.0f, adjustedDist);
+                float dist = worldScale * distance(rayPos, playerPos);
+                float adjustedDist = dist * cosf(rayHeading - playerHeading);
+                wallHeights[x] = windowHeight / fmaxf(1.0f, adjustedDist);
                 colors[x] = color;
                 return;
             }
@@ -55,8 +61,8 @@ __global__ void castRaysKernel(
         float targetX = (rayDir.x > 0) ? floorf(rayPos.x + 1) : ceilf(rayPos.x - 1);
         float targetY = (rayDir.y > 0) ? floorf(rayPos.y + 1) : ceilf(rayPos.y - 1);
         float stepSize = fminf((targetX - rayPos.x) / rayDir.x, (targetY - rayPos.y) / rayDir.y);
-        rayPos.x += rayDir.x * stepSize;
-        rayPos.y += rayDir.y * stepSize;
+        rayPos.x += rayDir.x * (stepSize + epsilon);
+        rayPos.y += rayDir.y * (stepSize + epsilon);
     }
 }
 
@@ -64,7 +70,9 @@ extern "C" JNIEXPORT void JNICALL Java_org_spi3lot_rendering_RaycastGpu_castCuda
     JNIEnv *env,
     jobject obj,
     jobjectArray map,
-    jint width,
+    jfloat worldScale,
+    jint windowWidth,
+    jint windowHeight,
     jint maxSteps,
     jfloat epsilon,
     jfloat playerX,
@@ -90,9 +98,14 @@ extern "C" JNIEXPORT void JNICALL Java_org_spi3lot_rendering_RaycastGpu_castCuda
     for (int i = 0; i < mapHeight; ++i)
     {
         jintArray row = (jintArray)env->GetObjectArrayElement(map, i);
-        jint *rowData = env->GetIntArrayElements(row, 0);
+        int *rowData = env->GetIntArrayElements(row, 0);
         memcpy(h_map + i * mapWidth, rowData, mapWidth * sizeof(int));
         env->ReleaseIntArrayElements(row, rowData, 0);
+    }
+
+    for (int i = 0; i < mapWidth * mapHeight; ++i)
+    {
+        printf("h_map[%d] = %d\n", i, h_map[i]);
     }
 
     int *d_map;
@@ -103,8 +116,8 @@ extern "C" JNIEXPORT void JNICALL Java_org_spi3lot_rendering_RaycastGpu_castCuda
     // Allocate device memory for results
     float *d_wallHeights;
     int *d_colors;
-    cudaMalloc(&d_wallHeights, width * sizeof(float));
-    cudaMalloc(&d_colors, width * sizeof(int));
+    cudaMalloc(&d_wallHeights, windowWidth * sizeof(float));
+    cudaMalloc(&d_colors, windowWidth * sizeof(int));
 
     // Define player position and ray directions
     float2 playerPos = make_float2(playerX, playerY);
@@ -113,10 +126,15 @@ extern "C" JNIEXPORT void JNICALL Java_org_spi3lot_rendering_RaycastGpu_castCuda
 
     // Launch the kernel
     int blockSize = 256;
-    int numBlocks = (width + blockSize - 1) / blockSize;
+    int numBlocks = (windowWidth + blockSize - 1) / blockSize;
 
     castRaysKernel<<<numBlocks, blockSize>>>(
-        width,
+        d_map,
+        mapWidth,
+        mapHeight,
+        worldScale,
+        windowWidth,
+        windowHeight,
         maxSteps,
         epsilon,
         playerPos,
@@ -124,14 +142,11 @@ extern "C" JNIEXPORT void JNICALL Java_org_spi3lot_rendering_RaycastGpu_castCuda
         leftMostRay,
         rightMostRay,
         d_wallHeights,
-        d_colors,
-        d_map,
-        mapWidth,
-        mapHeight);
+        d_colors);
 
     // Copy results back to host
-    cudaMemcpy(wallHeights, d_wallHeights, width * sizeof(float), cudaMemcpyDeviceToHost);
-    cudaMemcpy(colors, d_colors, width * sizeof(int), cudaMemcpyDeviceToHost);
+    cudaMemcpy(wallHeights, d_wallHeights, windowWidth * sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(colors, d_colors, windowWidth * sizeof(int), cudaMemcpyDeviceToHost);
 
     // Release device memory
     cudaFree(d_wallHeights);

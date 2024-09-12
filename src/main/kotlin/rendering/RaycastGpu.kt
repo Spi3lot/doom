@@ -21,7 +21,9 @@ object RaycastGpu {
 
         castCudaRays(
             map,
+            settings.worldScale,
             width,
+            height,
             Ray.maxSteps,
             Ray.epsilon,
             player.position.x,
@@ -42,7 +44,9 @@ object RaycastGpu {
 
     private external fun castCudaRays(
         map: DoomMap,
-        width: Int,
+        worldScale: Float,
+        windowWidth: Int,
+        windowHeight: Int,
         maxSteps: Int,
         epsilon: Float,
         playerX: Float,

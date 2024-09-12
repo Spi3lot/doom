@@ -45,6 +45,7 @@ class Doom : PApplet() {
     }
 
     override fun setup() {
+        frameRate(1000f)
         windowResizable(true)
         keyHandler.addKeyAction('W') { player.moveForward(map, settings.playerSpeed * Time.deltaTime); }
         keyHandler.addKeyAction('A') { player.moveLeft(map, settings.playerSpeed * Time.deltaTime) }
@@ -60,8 +61,12 @@ class Doom : PApplet() {
         if (showMap) {
             drawMap(map, drawRays = true)
         } else {
-            render(map)
+            render(map, settings.gpu)
         }
+
+        fill(255)
+        textSize(20f)
+        text("FPS: ${(1 / Time.deltaTime).toInt()}", 10f, 20f)
     }
 
     override fun keyPressed(event: KeyEvent) {
@@ -70,6 +75,8 @@ class Doom : PApplet() {
         when (event.keyCode) {
             'R'.code -> map = MapReader.readMap("")
             'M'.code -> showMap = !showMap
+            'C'.code -> settings.gpu = false
+            'G'.code -> settings.gpu = true
         }
     }
 

@@ -50,7 +50,7 @@ object Draw {
         }
     }
 
-    fun Doom.render(map: DoomMap, gpu: Boolean = false, drawRays: Boolean = false) {
+    fun Doom.render(map: DoomMap, gpu: Boolean = true, drawRays: Boolean = false) {
         val leftMostRay = player.getLeftMostRayDirection(settings.fov)
         val rightMostRay = player.getRightMostRayDirection(settings.fov)
 
