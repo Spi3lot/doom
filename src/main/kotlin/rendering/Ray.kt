@@ -13,9 +13,15 @@ import processing.core.PVector
 class Ray(
     val position: PVector = PVector(),
     val direction: PVector = PVector(),
-    private val maxSteps: Int = 25,
-    private val epsilon: Float = 0.001f,
 ) {
+
+    companion object {
+
+        var maxSteps: Int = 25
+
+        var epsilon: Float = 0.001f
+
+    }
 
     private var stepCount = 0
 

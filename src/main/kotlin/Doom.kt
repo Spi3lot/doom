@@ -6,6 +6,7 @@ import org.spi3lot.input.KeyHandler
 import org.spi3lot.input.Player
 import org.spi3lot.rendering.Draw.drawMap
 import org.spi3lot.rendering.Draw.render
+import org.spi3lot.time.Time
 import processing.core.PApplet
 import processing.core.PVector
 import processing.event.KeyEvent
@@ -31,9 +32,6 @@ class Doom : PApplet() {
         fov = PI * 0.6f
     )
 
-    private val deltaTime: Float
-        get() = 1 / frameRate
-
     private val keyHandler = KeyHandler()
 
     private val backgroundColor = color(0, 255, 255)
@@ -47,14 +45,15 @@ class Doom : PApplet() {
     }
 
     override fun setup() {
-        keyHandler.addKeyAction('W') { player.moveForward(map, settings.playerSpeed * deltaTime) }
-        keyHandler.addKeyAction('A') { player.moveLeft(map, settings.playerSpeed * deltaTime) }
-        keyHandler.addKeyAction('S') { player.moveBackward(map, settings.playerSpeed * deltaTime) }
-        keyHandler.addKeyAction('D') { player.moveRight(map, settings.playerSpeed * deltaTime) }
-        noCursor()
+        windowResizable(true)
+        keyHandler.addKeyAction('W') { player.moveForward(map, settings.playerSpeed * Time.deltaTime); }
+        keyHandler.addKeyAction('A') { player.moveLeft(map, settings.playerSpeed * Time.deltaTime) }
+        keyHandler.addKeyAction('S') { player.moveBackward(map, settings.playerSpeed * Time.deltaTime) }
+        keyHandler.addKeyAction('D') { player.moveRight(map, settings.playerSpeed * Time.deltaTime) }
     }
 
     override fun draw() {
+        Time.updateDeltaTime()
         keyHandler.invokeActions()
         background(backgroundColor)
 
@@ -79,7 +78,12 @@ class Doom : PApplet() {
     }
 
     override fun mouseDragged(event: MouseEvent) {
-        player.direction += (mouseX - pmouseX) * 0.005f
+        player.heading += (mouseX - pmouseX) * 0.005f
+    }
+
+    override fun windowResized() {
+        settings.width = width
+        settings.height = height
     }
 
 }

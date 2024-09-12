@@ -11,15 +11,15 @@ import processing.core.PVector
  */
 class Player(
     val position: PVector = PVector(),
-    var direction: Float = 0f,
+    var heading: Float = 0f,
 ) {
 
     fun getLeftMostRayDirection(fov: Float): PVector {
-        return PVector.fromAngle(direction - fov / 2)
+        return PVector.fromAngle(heading - fov / 2)
     }
 
     fun getRightMostRayDirection(fov: Float): PVector {
-        return PVector.fromAngle(direction + fov / 2)
+        return PVector.fromAngle(heading + fov / 2)
     }
 
     fun moveBackward(map: DoomMap, speed: Float = 1f) {
@@ -31,11 +31,11 @@ class Player(
     }
 
     fun moveForward(map: DoomMap, speed: Float = 1f) {
-        position.add(PVector.fromAngle(direction) * speed)
+        position.add(PVector.fromAngle(heading) * speed)
     }
 
     fun moveRight(map: DoomMap, speed: Float = 1f) {
-        position.add(PVector.fromAngle(direction + HALF_PI) * speed)
+        position.add(PVector.fromAngle(heading + HALF_PI) * speed)
     }
 
 }
