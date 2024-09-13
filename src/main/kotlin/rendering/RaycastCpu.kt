@@ -4,7 +4,6 @@ import org.spi3lot.Doom
 import org.spi3lot.data.DoomMap
 import org.spi3lot.data.getTileColor
 import org.spi3lot.data.worldToScreen
-import org.spi3lot.rendering.Draw.drawWallLine
 import processing.core.PVector
 import kotlin.math.cos
 import kotlin.math.max
@@ -17,41 +16,68 @@ object RaycastCpu {
 
     internal fun Doom.renderCpu(
         map: DoomMap,
-        drawRays: Boolean,
         leftMostRay: PVector,
         rightMostRay: PVector,
+        drawRays: Boolean,
     ) {
         val ray = Ray()
 
-        for (x in 0..<width) {
-            ray.position.set(player.position)
-            ray.direction.set(PVector.lerp(leftMostRay, rightMostRay, x / width.toFloat()))
-            castRay(ray, map, drawRays, x)
-            ray.reset()
+        if (drawRays) {
+            for (x in 0..<width) {
+                ray.position.set(player.position)
+                ray.direction.set(PVector.lerp(leftMostRay, rightMostRay, x / width.toFloat()))
+                castRay(ray, map)
+                ray.reset()
+            }
+        } else {
+            val wallHeights = IntArray(width)
+            val colors = IntArray(width)
+
+            for (x in 0..<width) {
+                ray.position.set(player.position)
+                ray.direction.set(PVector.lerp(leftMostRay, rightMostRay, x / width.toFloat()))
+                castRay(ray, map, wallHeights, colors, x)
+                ray.reset()
+            }
+
+            lineShader.set("wallHeights", wallHeights)
+            lineShader.set("colors", colors)
         }
     }
 
-    private fun Doom.castRay(ray: Ray, map: DoomMap, drawRays: Boolean, x: Int) {
+    private fun Doom.castRay(
+        ray: Ray,
+        map: DoomMap,
+        wallHeights: IntArray,
+        colors: IntArray,
+        x: Int,
+    ) {
         while (ray.canStep()) {
             val color = map.getTileColor(ray.position)
 
             if (color != null) {
-                if (drawRays) {
-                    drawRayIntersection(ray, map)
-                } else {
-                    val distance = settings.distance(ray.position, player.position)
-                    val adjustedDistance = distance * cos(ray.direction.heading() - player.heading)
-                    val wallHeight = height / max(1f, adjustedDistance)
-                    drawWallLine(x, wallHeight, color)
-                }
-
+                val distance = settings.distance(ray.position, player.position)
+                val adjustedDistance = distance * cos(ray.direction.heading() - player.heading)
+                val wallHeight = height / max(1f, adjustedDistance)
+                wallHeights[x] = wallHeight.toInt()
+                colors[x] = color
                 return
             }
 
-            if (drawRays) {
-                drawRayPosition(ray, map)
+            ray.step()
+        }
+    }
+
+    private fun Doom.castRay(ray: Ray, map: DoomMap) {
+        while (ray.canStep()) {
+            val color = map.getTileColor(ray.position)
+
+            if (color != null) {
+                drawRayIntersection(ray, map)
+                return
             }
 
+            drawRayPosition(ray, map)
             ray.step()
         }
     }

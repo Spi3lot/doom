@@ -12,7 +12,7 @@ class Settings(
     val worldScale: Float,
     val speedMultiplier: Float,
     val fov: Float,
-    var gpu: Boolean = true
+    var gpu: Boolean
 ) {
 
     var width: Int = width

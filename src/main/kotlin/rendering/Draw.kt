@@ -57,7 +57,7 @@ object Draw {
         if (gpu) {
             renderGpu(map, leftMostRay, rightMostRay)
         } else {
-            renderCpu(map, drawRays, leftMostRay, rightMostRay)
+            renderCpu(map, leftMostRay, rightMostRay, drawRays)
         }
     }
 

@@ -2,7 +2,6 @@ package org.spi3lot.rendering
 
 import org.spi3lot.Doom
 import org.spi3lot.data.DoomMap
-import org.spi3lot.rendering.Draw.drawWallLine
 import processing.core.PVector
 
 /**
@@ -16,14 +15,16 @@ object RaycastGpu {
     }
 
     internal fun Doom.renderGpu(map: DoomMap, leftMostRay: PVector, rightMostRay: PVector) {
-        val wallHeights = FloatArray(width)
-        val colors = IntArray(width)
+        val windowWidth = width
+        val windowHeight = height
+        val wallHeights = IntArray(windowWidth)
+        val colors = IntArray(windowWidth)
 
         castCudaRays(
             map,
             settings.worldScale,
-            width,
-            height,
+            windowWidth,
+            windowHeight,
             Ray.maxSteps,
             Ray.epsilon,
             player.position.x,
@@ -36,10 +37,6 @@ object RaycastGpu {
             wallHeights,
             colors
         )
-
-        for (x in 0..<width) {
-            drawWallLine(x, wallHeights[x], colors[x])
-        }
     }
 
     private external fun castCudaRays(
@@ -56,7 +53,7 @@ object RaycastGpu {
         leftMostRayDirectionY: Float,
         rightMostRayDirectionX: Float,
         rightMostRayDirectionY: Float,
-        wallHeights: FloatArray,
+        wallHeights: IntArray,
         colors: IntArray,
     )
 

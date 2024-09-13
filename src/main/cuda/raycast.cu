@@ -9,8 +9,7 @@ __device__ float distance(float2 a, float2 b)
 
 __device__ float2 lerp(float2 a, float2 b, float t)
 {
-    // return make_float2(fmaf(t, b.x - a.x, a.x), fmaf(t, b.y - a.y, a.y));
-    return make_float2(a.x + t * (b.x - a.x), a.y + t * (b.y - a.y));
+    return make_float2(fmaf(t, b.x - a.x, a.x), fmaf(t, b.y - a.y, a.y));
 }
 
 __global__ void castRaysKernel(
@@ -82,11 +81,11 @@ extern "C" JNIEXPORT void JNICALL Java_org_spi3lot_rendering_RaycastGpu_castCuda
     jfloat leftMostRayDirectionY,
     jfloat rightMostRayDirectionX,
     jfloat rightMostRayDirectionY,
-    jfloatArray wallHeightsArray,
+    jintArray wallHeightsArray,
     jintArray colorsArray)
 {
     // Convert Java arrays to native arrays
-    jfloat *wallHeights = env->GetFloatArrayElements(wallHeightsArray, 0);
+    jint *wallHeights = env->GetIntArrayElements(wallHeightsArray, 0);
     jint *colors = env->GetIntArrayElements(colorsArray, 0);
 
     // Get map data from Java object
@@ -154,6 +153,6 @@ extern "C" JNIEXPORT void JNICALL Java_org_spi3lot_rendering_RaycastGpu_castCuda
     cudaFree(d_map);
 
     // Release Java arrays
-    env->ReleaseFloatArrayElements(wallHeightsArray, wallHeights, 0);
+    env->ReleaseIntArrayElements(wallHeightsArray, wallHeights, 0);
     env->ReleaseIntArrayElements(colorsArray, colors, 0);
 }

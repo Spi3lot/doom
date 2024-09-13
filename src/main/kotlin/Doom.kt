@@ -11,12 +11,14 @@ import processing.core.PApplet
 import processing.core.PVector
 import processing.event.KeyEvent
 import processing.event.MouseEvent
+import processing.opengl.PShader
 
 /**
  *  @since 30.08.2024, Fr.
  *  @author Emilio Zottel
  */
 fun main() {
+    System.setProperty("java.library.path", "D:\\PROGRAMMING\\processing-4.3\\core\\library\\windows-amd64")
     PApplet.main(Doom::class.java)
 }
 
@@ -29,7 +31,8 @@ class Doom : PApplet() {
         height = 600,
         worldScale = 3f,
         speedMultiplier = 5f,
-        fov = PI * 0.6f
+        fov = PI * 0.6f,
+        gpu = false
     )
 
     private val keyHandler = KeyHandler()
@@ -40,8 +43,10 @@ class Doom : PApplet() {
 
     private var showMap = false
 
+    lateinit var lineShader: PShader
+
     override fun settings() {
-        size(settings.width, settings.height)
+        size(settings.width, settings.height, P2D)
     }
 
     override fun setup() {
@@ -51,6 +56,7 @@ class Doom : PApplet() {
         keyHandler.addKeyAction('A') { player.moveLeft(map, settings.playerSpeed * Time.deltaTime) }
         keyHandler.addKeyAction('S') { player.moveBackward(map, settings.playerSpeed * Time.deltaTime) }
         keyHandler.addKeyAction('D') { player.moveRight(map, settings.playerSpeed * Time.deltaTime) }
+        lineShader = loadShader("shaders/lines.frag")
     }
 
     override fun draw() {
@@ -64,6 +70,8 @@ class Doom : PApplet() {
             render(map, settings.gpu)
         }
 
+        shader(lineShader)
+        rect(0f, 0f, width.toFloat(), height.toFloat())
         fill(255)
         textSize(20f)
         text("FPS: ${(1 / Time.deltaTime).toInt()}", 10f, 20f)
@@ -91,6 +99,7 @@ class Doom : PApplet() {
     override fun windowResized() {
         settings.width = width
         settings.height = height
+        lineShader.set("resolution", width, height)
     }
 
 }
