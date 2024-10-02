@@ -37,6 +37,15 @@ object RaycastGpu {
             wallHeights,
             colors
         )
+
+        dataTexture.loadPixels()
+
+        for (x in 0..<windowWidth) {
+            dataTexture.pixels[x] = wallHeights[x]
+            dataTexture.pixels[windowWidth + x] = colors[x]
+        }
+
+        dataTexture.updatePixels()
     }
 
     private external fun castCudaRays(

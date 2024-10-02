@@ -32,16 +32,18 @@ object RaycastCpu {
         } else {
             val wallHeights = IntArray(width)
             val colors = IntArray(width)
+            dataTexture.loadPixels()
 
             for (x in 0..<width) {
                 ray.position.set(player.position)
                 ray.direction.set(PVector.lerp(leftMostRay, rightMostRay, x / width.toFloat()))
                 castRay(ray, map, wallHeights, colors, x)
+                dataTexture.pixels[x] = wallHeights[x]
+                dataTexture.pixels[width + x] = colors[x]
                 ray.reset()
             }
 
-            lineShader.set("wallHeights", wallHeights)
-            lineShader.set("colors", colors)
+            dataTexture.updatePixels()
         }
     }
 

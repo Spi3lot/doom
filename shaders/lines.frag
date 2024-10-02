@@ -1,18 +1,19 @@
-const int displayWidth = 600;
-uniform isampler1D wallHeights;
-uniform isampler1D colors;
-uniform int backgroundColor;
 uniform ivec2 resolution;
+uniform vec4 backgroundColor;
+uniform sampler2D texture;
 
-vec4 intToColor(int color) {
-	return vec4(color & 0xFF, (color >> 8) & 0xFF, (color >> 16) & 0xFF, (color >> 24) & 0xFF) / 255.0;
+int vec4ToInt(vec4 v) {
+	int a = min(255, int(v.a * 255f)) << 24;
+	int r = min(255, int(v.r * 255f)) << 16;
+	int g = min(255, int(v.g * 255f)) << 8;
+	int b = min(255, int(v.b * 255f));
+	return a | r | g | b;
 }
 
 void main() {
 	int x = int(gl_FragCoord.x);
 	int y = int(gl_FragCoord.y);
-	int wallHeight = texelFetch(wallHeights, x, 0).r;
-	int color = texelFetch(colors, x, 0).r;
-	bool isWall = ((resolution.y - wallHeight) / 2 <= y && y < (resolution.y + wallHeight) / 2);
-	gl_FragColor = (isWall) ? intToColor(color) : intToColor(backgroundColor);
+	int wallHeight = vec4ToInt(texelFetch(texture, ivec2(x, 0), 0));
+	bool isWall = ((resolution.y - wallHeight) < y * 2 && y * 2 < (resolution.y + wallHeight));
+	gl_FragColor = (isWall) ? texelFetch(texture, ivec2(x, 1), 0) : backgroundColor;
 }

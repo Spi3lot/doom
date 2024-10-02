@@ -46,7 +46,7 @@ object Draw {
         popMatrix()
 
         if (drawRays) {
-            render(map, false, true)
+            render(map, gpu = false, drawRays = true)
         }
     }
 

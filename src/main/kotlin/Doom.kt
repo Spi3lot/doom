@@ -8,6 +8,7 @@ import org.spi3lot.rendering.Draw.drawMap
 import org.spi3lot.rendering.Draw.render
 import org.spi3lot.time.Time
 import processing.core.PApplet
+import processing.core.PImage
 import processing.core.PVector
 import processing.event.KeyEvent
 import processing.event.MouseEvent
@@ -24,7 +25,7 @@ fun main() {
 
 class Doom : PApplet() {
 
-    val player = Player(PVector(5f, 5f))
+    val player = Player(position = PVector(5f, 5f))
 
     val settings = Settings(
         width = 600,
@@ -35,6 +36,8 @@ class Doom : PApplet() {
         gpu = false
     )
 
+    val dataTexture = PImage(0, 2)
+
     private val keyHandler = KeyHandler()
 
     private val backgroundColor = color(0, 255, 255)
@@ -43,10 +46,10 @@ class Doom : PApplet() {
 
     private var showMap = false
 
-    lateinit var lineShader: PShader
+    private lateinit var lineShader: PShader
 
     override fun settings() {
-        size(settings.width, settings.height, P2D)
+        size(settings.width, settings.height, P3D)
     }
 
     override fun setup() {
@@ -56,6 +59,7 @@ class Doom : PApplet() {
         keyHandler.addKeyAction('A') { player.moveLeft(map, settings.playerSpeed * Time.deltaTime) }
         keyHandler.addKeyAction('S') { player.moveBackward(map, settings.playerSpeed * Time.deltaTime) }
         keyHandler.addKeyAction('D') { player.moveRight(map, settings.playerSpeed * Time.deltaTime) }
+        dataTexture.resize(width, 2)
         lineShader = loadShader("shaders/lines.frag")
     }
 
@@ -68,10 +72,10 @@ class Doom : PApplet() {
             drawMap(map, drawRays = true)
         } else {
             render(map, settings.gpu)
+            shader(lineShader)
+            image(dataTexture, 0f, 0f)
         }
 
-        shader(lineShader)
-        rect(0f, 0f, width.toFloat(), height.toFloat())
         fill(255)
         textSize(20f)
         text("FPS: ${(1 / Time.deltaTime).toInt()}", 10f, 20f)
@@ -99,6 +103,7 @@ class Doom : PApplet() {
     override fun windowResized() {
         settings.width = width
         settings.height = height
+        dataTexture.resize(width, 2)
         lineShader.set("resolution", width, height)
     }
 
