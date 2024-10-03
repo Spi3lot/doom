@@ -25,7 +25,7 @@ __global__ void castRaysKernel(
     float playerHeading,
     float2 leftMostRayDirection,
     float2 rightMostRayDirection,
-    float *wallHeights,
+    int *wallHeights,
     int *colors)
 {
     int x = blockIdx.x * blockDim.x + threadIdx.x;
@@ -50,7 +50,7 @@ __global__ void castRaysKernel(
             {
                 float dist = worldScale * distance(rayPos, playerPos);
                 float adjustedDist = dist * cosf(rayHeading - playerHeading);
-                wallHeights[x] = windowHeight / fmaxf(1.0f, adjustedDist);
+                wallHeights[x] = (int) (windowHeight / fmaxf(1.0f, adjustedDist));
                 colors[x] = color;
                 return;
             }
@@ -102,18 +102,13 @@ extern "C" JNIEXPORT void JNICALL Java_org_spi3lot_rendering_RaycastGpu_castCuda
         env->ReleaseIntArrayElements(row, rowData, 0);
     }
 
-    for (int i = 0; i < mapWidth * mapHeight; ++i)
-    {
-        printf("h_map[%d] = %d\n", i, h_map[i]);
-    }
-
     int *d_map;
     cudaMalloc(&d_map, mapWidth * mapHeight * sizeof(int));
     cudaMemcpy(d_map, h_map, mapWidth * mapHeight * sizeof(int), cudaMemcpyHostToDevice);
     delete[] h_map;
 
     // Allocate device memory for results
-    float *d_wallHeights;
+    int *d_wallHeights;
     int *d_colors;
     cudaMalloc(&d_wallHeights, windowWidth * sizeof(float));
     cudaMalloc(&d_colors, windowWidth * sizeof(int));

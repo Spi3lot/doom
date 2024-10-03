@@ -36,7 +36,7 @@ class Doom : PApplet() {
         gpu = false
     )
 
-    val dataTexture = PImage(0, 2)
+    val dataTexture: PImage = createImage(width, height, ARGB)
 
     private val keyHandler = KeyHandler()
 
@@ -49,7 +49,7 @@ class Doom : PApplet() {
     private lateinit var lineShader: PShader
 
     override fun settings() {
-        size(settings.width, settings.height, P3D)
+        size(settings.width, settings.height, P2D)
     }
 
     override fun setup() {
@@ -59,8 +59,8 @@ class Doom : PApplet() {
         keyHandler.addKeyAction('A') { player.moveLeft(map, settings.playerSpeed * Time.deltaTime) }
         keyHandler.addKeyAction('S') { player.moveBackward(map, settings.playerSpeed * Time.deltaTime) }
         keyHandler.addKeyAction('D') { player.moveRight(map, settings.playerSpeed * Time.deltaTime) }
-        dataTexture.resize(width, 2)
         lineShader = loadShader("shaders/lines.frag")
+        lineShader.set("backgroundColor", backgroundColor)
     }
 
     override fun draw() {
@@ -76,6 +76,7 @@ class Doom : PApplet() {
             image(dataTexture, 0f, 0f)
         }
 
+        resetShader()
         fill(255)
         textSize(20f)
         text("FPS: ${(1 / Time.deltaTime).toInt()}", 10f, 20f)
@@ -103,7 +104,7 @@ class Doom : PApplet() {
     override fun windowResized() {
         settings.width = width
         settings.height = height
-        dataTexture.resize(width, 2)
+        dataTexture.resize(width, height)
         lineShader.set("resolution", width, height)
     }
 

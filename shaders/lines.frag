@@ -3,10 +3,10 @@ uniform vec4 backgroundColor;
 uniform sampler2D texture;
 
 int vec4ToInt(vec4 v) {
-	int a = min(255, int(v.a * 255f)) << 24;
-	int r = min(255, int(v.r * 255f)) << 16;
-	int g = min(255, int(v.g * 255f)) << 8;
-	int b = min(255, int(v.b * 255f));
+	int a = int(v.a * 255f) << 24;
+	int r = int(v.r * 255f) << 16;
+	int g = int(v.g * 255f) << 8;
+	int b = int(v.b * 255f);
 	return a | r | g | b;
 }
 

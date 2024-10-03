@@ -61,10 +61,4 @@ object Draw {
         }
     }
 
-    internal fun Doom.drawWallLine(x: Int, wallHeight: Float, color: Int) {
-        stroke(color)
-        strokeWeight(1f)
-        line(x.toFloat(), (height - wallHeight) / 2, x.toFloat(), (height + wallHeight) / 2)
-    }
-
 }

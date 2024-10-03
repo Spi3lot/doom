@@ -21,26 +21,27 @@ object RaycastCpu {
         drawRays: Boolean,
     ) {
         val ray = Ray()
+        val windowWidth = width
 
         if (drawRays) {
-            for (x in 0..<width) {
+            for (x in 0..<windowWidth) {
                 ray.position.set(player.position)
-                ray.direction.set(PVector.lerp(leftMostRay, rightMostRay, x / width.toFloat()))
+                ray.direction.set(PVector.lerp(leftMostRay, rightMostRay, x / windowWidth.toFloat()))
                 castRay(ray, map)
                 ray.reset()
             }
         } else {
-            val wallHeights = IntArray(width)
-            val colors = IntArray(width)
+            val wallHeights = IntArray(windowWidth)
+            val colors = IntArray(windowWidth)
             dataTexture.loadPixels()
 
-            for (x in 0..<width) {
+            for (x in 0..<windowWidth) {
                 ray.position.set(player.position)
-                ray.direction.set(PVector.lerp(leftMostRay, rightMostRay, x / width.toFloat()))
+                ray.direction.set(PVector.lerp(leftMostRay, rightMostRay, x / windowWidth.toFloat()))
                 castRay(ray, map, wallHeights, colors, x)
-                dataTexture.pixels[x] = wallHeights[x]
-                dataTexture.pixels[width + x] = colors[x]
                 ray.reset()
+                dataTexture.pixels[x] = wallHeights[x]
+                dataTexture.pixels[windowWidth + x] = colors[x]
             }
 
             dataTexture.updatePixels()
